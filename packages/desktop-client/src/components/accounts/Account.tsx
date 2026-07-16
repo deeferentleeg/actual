@@ -49,6 +49,11 @@ import { markAccountRead } from '#accounts/accountsSlice';
 import * as reconciliation from '#accounts/reconciliation';
 import { FeatureErrorFallback } from '#components/FeatureErrorFallback';
 import type { SavedFilter } from '#components/filters/SavedFilterMenuButton';
+import {
+  parseTransactionTableColumns,
+  serializeTransactionTableColumns,
+} from '#components/transactions/table/columns';
+import type { TransactionTableColumn } from '#components/transactions/table/columns';
 import { TransactionList } from '#components/transactions/TransactionList';
 import { validateAccountName } from '#components/util/accountValidation';
 import { useAccountPreviewTransactions } from '#hooks/useAccountPreviewTransactions';
@@ -221,6 +226,8 @@ type AccountInternalProps = {
   setShowReconciled: (newValue: boolean) => void;
   showExtraBalances?: boolean;
   setShowExtraBalances: (newValue: boolean) => void;
+  columnsConfig?: string;
+  setColumnsConfig: (newValue: string) => void;
   modalShowing?: boolean;
   accounts: AccountEntity[];
   newTransactions: Array<TransactionEntity['id']>;
@@ -804,7 +811,8 @@ class AccountInternal extends PureComponent<
       | 'remove-sorting'
       | 'toggle-cleared'
       | 'toggle-reconciled'
-      | 'toggle-net-worth-chart',
+      | 'toggle-net-worth-chart'
+      | 'manage-columns',
   ) => {
     const accountId = this.props.accountId!;
     const account = this.props.accounts.find(
@@ -913,7 +921,69 @@ class AccountInternal extends PureComponent<
           this.props.setShowNetWorthChart(true);
         }
         break;
+      case 'manage-columns':
+        this.onManageColumns();
+        break;
       default:
+    }
+  };
+
+  showAccountColumn = () => {
+    const accountId = this.props.accountId;
+    return (
+      !accountId ||
+      accountId === 'offbudget' ||
+      accountId === 'onbudget' ||
+      accountId === 'uncategorized'
+    );
+  };
+
+  onManageColumns = () => {
+    const columns = parseTransactionTableColumns(this.props.columnsConfig)
+      .filter(
+        column =>
+          (column.id !== 'account' || this.showAccountColumn()) &&
+          (column.id !== 'balance' || this.canCalculateBalance()),
+      )
+      .map(column => {
+        // The balance and cleared columns have their own long-standing
+        // synced prefs tracking their visibility, so those take precedence
+        // over the hidden flag stored in the columns pref.
+        if (column.id === 'balance') {
+          return { ...column, hidden: !this.state.showBalances };
+        }
+        if (column.id === 'cleared') {
+          return { ...column, hidden: !this.state.showCleared };
+        }
+        return column;
+      });
+
+    this.props.dispatch(
+      pushModal({
+        modal: {
+          name: 'transaction-table-columns',
+          options: {
+            columns,
+            onSave: this.onSaveColumns,
+          },
+        },
+      }),
+    );
+  };
+
+  onSaveColumns = (columns: TransactionTableColumn[]) => {
+    this.props.setColumnsConfig(serializeTransactionTableColumns(columns));
+
+    // The balance and cleared columns are backed by their own synced prefs
+    // (and toggling them has side effects like recalculating balances), so
+    // route visibility changes through the existing toggle handlers.
+    const balance = columns.find(column => column.id === 'balance');
+    if (balance && !balance.hidden !== !!this.state.showBalances) {
+      void this.onMenuSelect('toggle-balance');
+    }
+    const cleared = columns.find(column => column.id === 'cleared');
+    if (cleared && !cleared.hidden !== !!this.state.showCleared) {
+      void this.onMenuSelect('toggle-cleared');
     }
   };
 
@@ -1721,6 +1791,16 @@ class AccountInternal extends PureComponent<
 
     const balanceQuery = this.getBalanceQuery(accountId);
 
+    // Ordered list of columns the user wants visible. The balance and
+    // cleared columns are managed by their own synced prefs, so their
+    // stored hidden flag is ignored here and the show* props/state decide.
+    const columnOrder = parseTransactionTableColumns(this.props.columnsConfig)
+      .filter(
+        column =>
+          column.id === 'balance' || column.id === 'cleared' || !column.hidden,
+      )
+      .map(column => column.id);
+
     const selectAllFilter = (item: TransactionEntity): boolean => {
       if (item.is_parent) {
         const children = transactions.filter(t => t.parent_id === item.id);
@@ -1767,13 +1847,10 @@ class AccountInternal extends PureComponent<
                 accountsSyncing={accountsSyncing}
                 accounts={accounts}
                 transactions={transactions}
-                showBalances={showBalances ?? false}
                 showExtraBalances={showExtraBalances ?? false}
-                showCleared={showCleared ?? false}
                 showReconciled={showReconciled ?? false}
                 showEmptyMessage={showEmptyMessage ?? false}
                 balanceQuery={balanceQuery}
-                canCalculateBalance={this?.canCalculateBalance ?? undefined}
                 filteredAmount={filteredAmount}
                 isFiltered={transactionsFiltered ?? false}
                 isSorted={this.state.sort !== null}
@@ -1784,6 +1861,7 @@ class AccountInternal extends PureComponent<
                 filterConditionsOp={this.state.filterConditionsOp}
                 onSearch={this.onSearch}
                 onShowTransactions={this.onShowTransactions}
+                onManageColumns={this.onManageColumns}
                 onMenuSelect={this.onMenuSelect}
                 onAddTransaction={this.onAddTransaction}
                 onToggleExtraBalances={this.onToggleExtraBalances}
@@ -1835,12 +1913,8 @@ class AccountInternal extends PureComponent<
                   showBalances={!!allBalances}
                   showReconciled={showReconciled}
                   showCleared={!!showCleared}
-                  showAccount={
-                    !accountId ||
-                    accountId === 'offbudget' ||
-                    accountId === 'onbudget' ||
-                    accountId === 'uncategorized'
-                  }
+                  showAccount={this.showAccountColumn()}
+                  columnOrder={columnOrder}
                   allowReorder={
                     !!accountId &&
                     accountId !== 'offbudget' &&
@@ -1977,6 +2051,9 @@ export function Account() {
   const [showExtraBalances, setShowExtraBalances] = useSyncedPref(
     `show-extra-balances-${params.id || 'all-accounts'}`,
   );
+  const [columnsConfig, setColumnsConfig] = useSyncedPref(
+    `transaction-table-columns-${params.id || 'all-accounts'}`,
+  );
   const modalShowing = useSelector(state => state.modals.modalStack.length > 0);
   const accountsSyncing = useSelector(state => state.account.accountsSyncing);
   const filterConditions = location?.state?.filterConditions || [];
@@ -2033,6 +2110,8 @@ export function Account() {
             setShowExtraBalances={extraBalances =>
               setShowExtraBalances(String(extraBalances))
             }
+            columnsConfig={columnsConfig}
+            setColumnsConfig={setColumnsConfig}
             payees={payees}
             modalShowing={modalShowing}
             accountsSyncing={accountsSyncing}

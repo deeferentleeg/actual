@@ -135,6 +135,8 @@ import { aqlQuery } from '#queries/aqlQuery';
 import { useDispatch } from '#redux';
 import { getStatusLabel } from '#util/schedule';
 
+import { TRANSACTION_TABLE_COLUMN_IDS } from './table/columns';
+import type { TransactionTableColumnId } from './table/columns';
 import {
   deserializeTransaction,
   isLastChild,
@@ -151,10 +153,7 @@ import { useTransactionRowContextActions } from './useTransactionRowContextActio
 
 type TransactionHeaderProps = {
   hasSelected: boolean;
-  showAccount: boolean;
-  showCategory: boolean;
-  showBalance: boolean;
-  showCleared: boolean;
+  columns: TransactionTableColumnId[];
   scrollWidth: number;
   showSelection: boolean;
   onSort: (field: string, ascDesc: 'asc' | 'desc') => void;
@@ -165,10 +164,7 @@ type TransactionHeaderProps = {
 const TransactionHeader = memo(
   ({
     hasSelected,
-    showAccount,
-    showCategory,
-    showBalance,
-    showCleared,
+    columns,
     scrollWidth,
     onSort,
     ascDesc,
@@ -228,114 +224,166 @@ const TransactionHeader = memo(
             }}
           />
         )}
-        <HeaderCell
-          value={t('Date')}
-          width={110}
-          alignItems="flex"
-          marginLeft={-5}
-          id="date"
-          icon={field === 'date' ? ascDesc : 'clickable'}
-          onClick={() =>
-            onSort('date', selectAscDesc(field, ascDesc, 'date', 'desc'))
-          }
-        />
-        {showAccount && (
-          <HeaderCell
-            value={t('Account')}
-            width="flex"
-            alignItems="flex"
-            marginLeft={-5}
-            id="account"
-            icon={field === 'account' ? ascDesc : 'clickable'}
-            onClick={() =>
-              onSort('account', selectAscDesc(field, ascDesc, 'account', 'asc'))
-            }
-          />
-        )}
-        <HeaderCell
-          value={t('Payee')}
-          width="flex"
-          alignItems="flex"
-          marginLeft={-5}
-          id="payee"
-          icon={field === 'payee' ? ascDesc : 'clickable'}
-          onClick={() =>
-            onSort('payee', selectAscDesc(field, ascDesc, 'payee', 'asc'))
-          }
-        />
-        <HeaderCell
-          value={t('Notes')}
-          width="flex"
-          alignItems="flex"
-          marginLeft={-5}
-          id="notes"
-          icon={field === 'notes' ? ascDesc : 'clickable'}
-          onClick={() =>
-            onSort('notes', selectAscDesc(field, ascDesc, 'notes', 'asc'))
-          }
-        />
-        {showCategory && (
-          <HeaderCell
-            value={t('Category')}
-            width="flex"
-            alignItems="flex"
-            marginLeft={-5}
-            id="category"
-            icon={field === 'category' ? ascDesc : 'clickable'}
-            onClick={() =>
-              onSort(
-                'category',
-                selectAscDesc(field, ascDesc, 'category', 'asc'),
-              )
-            }
-          />
-        )}
-        <HeaderCell
-          value={t('Payment')}
-          width={100}
-          alignItems="flex-end"
-          marginRight={-5}
-          id="payment"
-          icon={field === 'payment' ? ascDesc : 'clickable'}
-          onClick={() =>
-            onSort('payment', selectAscDesc(field, ascDesc, 'payment', 'asc'))
-          }
-        />
-        <HeaderCell
-          value={t('Deposit')}
-          width={100}
-          alignItems="flex-end"
-          marginRight={-5}
-          id="deposit"
-          icon={field === 'deposit' ? ascDesc : 'clickable'}
-          onClick={() =>
-            onSort('deposit', selectAscDesc(field, ascDesc, 'deposit', 'desc'))
-          }
-        />
-        {showBalance && (
-          <HeaderCell
-            value={t('Balance')}
-            width={103}
-            alignItems="flex-end"
-            marginRight={-5}
-            id="balance"
-          />
-        )}
-        {showCleared && (
-          <HeaderCell
-            value="✓"
-            width={38}
-            alignItems="center"
-            id="cleared"
-            icon={field === 'cleared' ? ascDesc : 'clickable'}
-            onClick={() => {
-              onSort(
-                'cleared',
-                selectAscDesc(field, ascDesc, 'cleared', 'asc'),
+        {columns.map(columnId => {
+          switch (columnId) {
+            case 'date':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Date')}
+                  width={110}
+                  alignItems="flex"
+                  marginLeft={-5}
+                  id="date"
+                  icon={field === 'date' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'date',
+                      selectAscDesc(field, ascDesc, 'date', 'desc'),
+                    )
+                  }
+                />
               );
-            }}
-          />
-        )}
+            case 'account':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Account')}
+                  width="flex"
+                  alignItems="flex"
+                  marginLeft={-5}
+                  id="account"
+                  icon={field === 'account' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'account',
+                      selectAscDesc(field, ascDesc, 'account', 'asc'),
+                    )
+                  }
+                />
+              );
+            case 'payee':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Payee')}
+                  width="flex"
+                  alignItems="flex"
+                  marginLeft={-5}
+                  id="payee"
+                  icon={field === 'payee' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'payee',
+                      selectAscDesc(field, ascDesc, 'payee', 'asc'),
+                    )
+                  }
+                />
+              );
+            case 'notes':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Notes')}
+                  width="flex"
+                  alignItems="flex"
+                  marginLeft={-5}
+                  id="notes"
+                  icon={field === 'notes' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'notes',
+                      selectAscDesc(field, ascDesc, 'notes', 'asc'),
+                    )
+                  }
+                />
+              );
+            case 'category':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Category')}
+                  width="flex"
+                  alignItems="flex"
+                  marginLeft={-5}
+                  id="category"
+                  icon={field === 'category' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'category',
+                      selectAscDesc(field, ascDesc, 'category', 'asc'),
+                    )
+                  }
+                />
+              );
+            case 'payment':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Payment')}
+                  width={100}
+                  alignItems="flex-end"
+                  marginRight={-5}
+                  id="payment"
+                  icon={field === 'payment' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'payment',
+                      selectAscDesc(field, ascDesc, 'payment', 'asc'),
+                    )
+                  }
+                />
+              );
+            case 'deposit':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Deposit')}
+                  width={100}
+                  alignItems="flex-end"
+                  marginRight={-5}
+                  id="deposit"
+                  icon={field === 'deposit' ? ascDesc : 'clickable'}
+                  onClick={() =>
+                    onSort(
+                      'deposit',
+                      selectAscDesc(field, ascDesc, 'deposit', 'desc'),
+                    )
+                  }
+                />
+              );
+            case 'balance':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value={t('Balance')}
+                  width={103}
+                  alignItems="flex-end"
+                  marginRight={-5}
+                  id="balance"
+                />
+              );
+            case 'cleared':
+              return (
+                <HeaderCell
+                  key={columnId}
+                  value="✓"
+                  width={38}
+                  alignItems="center"
+                  id="cleared"
+                  icon={field === 'cleared' ? ascDesc : 'clickable'}
+                  onClick={() => {
+                    onSort(
+                      'cleared',
+                      selectAscDesc(field, ascDesc, 'cleared', 'asc'),
+                    );
+                  }}
+                />
+              );
+            default:
+              return null;
+          }
+        })}
       </Row>
     );
   },
@@ -850,9 +898,7 @@ type TransactionProps = {
     [id: TransactionEntity['id']]: AccountEntity | null;
   };
   editing: boolean;
-  showAccount?: boolean;
-  showBalance?: boolean;
-  showCleared?: boolean;
+  columns: TransactionTableColumnId[];
   showZeroInDeposit?: boolean;
   style?: CSSProperties;
   selected?: boolean;
@@ -917,9 +963,7 @@ const Transaction = memo(function Transaction({
   subtransactions,
   transferAccountsByTransaction,
   editing,
-  showAccount,
-  showBalance,
-  showCleared,
+  columns,
   showZeroInDeposit,
   style,
   selected,
@@ -1332,70 +1376,72 @@ const Transaction = memo(function Transaction({
     onMakeAsNonSplitTransactions: ids => onMakeAsNonSplitTransactions?.(ids),
   });
 
-  return (
-    <View
-      innerRef={dropRef}
-      {...dropProps}
-      style={{
-        position: 'relative',
-      }}
-    >
-      <DropHighlight pos={showDropHighlight ? dropPos : null} />
-      <Row
-        ref={rowRef}
-        {...dragProps}
-        style={{
-          backgroundColor: selected
-            ? theme.tableRowBackgroundHighlight
-            : backgroundFocus
-              ? theme.tableRowBackgroundHover
-              : index % 2 === 0
-                ? theme.tableBackground
-                : theme.tableRowBackgroundAlternate,
-          ':hover': !(backgroundFocus || selected) && {
-            backgroundColor: theme.tableRowBackgroundHover,
-          },
-          '& .hover-visible': {
-            opacity: 0,
-          },
-          ':hover .hover-visible': {
-            opacity: 1,
-          },
-          ...(highlighted || selected
-            ? { color: theme.tableRowBackgroundHighlightText }
-            : { color: theme.tableText }),
-          ...style,
-          ...(isPreview && {
-            color: theme.tableTextInactive,
-            fontStyle: 'italic',
-          }),
-          ...(_unmatched && { opacity: 0.5 }),
-          ...(isBeingDragged && { opacity: 0.5 }),
-        }}
-      >
-        {splitError && listContainerRef?.current && (
-          <Popover
-            triggerRef={triggerRef}
-            isOpen
-            isNonModal
-            style={{
-              width: 'max-content',
-              maxWidth: 'none',
-              maxHeight: 'none !important',
-              minWidth: 375,
-              padding: 5,
-            }}
-            shouldFlip={false}
-            placement="bottom end"
-            UNSTABLE_portalContainer={listContainerRef.current}
-          >
-            {splitError}
-          </Popover>
-        )}
+  // For child transactions the date/account cells render as blank
+  // placeholders, and the select/delete cell sits immediately before the
+  // first content cell instead of at the far left. Both layouts use the
+  // same set of cell widths, so the columns still line up with the parent.
+  let selectionCellIndex = 0;
+  if (isChild) {
+    const firstContentIndex = columns.findIndex(
+      id => id !== 'date' && id !== 'account',
+    );
+    selectionCellIndex =
+      firstContentIndex === -1 ? columns.length : firstContentIndex;
+  }
 
-        {isChild && (
+  const selectionCell = isTemporaryId(transaction.id) ? (
+    isChild ? (
+      <DeleteCell
+        onDelete={() => onDelete && onDelete(transaction.id)}
+        exposed={editing}
+        style={{
+          ...(isChild && { borderLeftWidth: 1 }),
+          lineHeight: 0,
+        }}
+      />
+    ) : (
+      <Cell width={20} />
+    )
+  ) : (isPreview && isChild) || !showSelection ? (
+    <Cell width={20} />
+  ) : (
+    <SelectCell
+      /* Checkmark field for non-child transaction */
+      exposed
+      buttonProps={{
+        className: selected || editing ? undefined : 'hover-visible',
+      }}
+      focused={focusedField === 'select'}
+      onSelect={(e: KeyboardEvent<HTMLDivElement>) => {
+        dispatchSelected({
+          type: 'select',
+          id: transaction.id,
+          isRangeSelect: e.shiftKey,
+        });
+      }}
+      onEdit={() => onEdit(id, 'select')}
+      selected={selected}
+      style={{ ...(isChild && { borderLeftWidth: 1 }) }}
+      value={
+        matched
+          ? // TODO: this will require changes in table.tsx
+            ((
+              <SvgHyperlink2
+                style={{ width: 13, height: 13, color: 'inherit' }}
+              />
+            ) as unknown as string)
+          : undefined
+      }
+    />
+  );
+
+  const renderColumnCell = (columnId: TransactionTableColumnId) => {
+    switch (columnId) {
+      case 'date':
+        return isChild ? (
           <Field
-            /* Checkmark blank placeholder for Child transaction */
+            key={columnId}
+            /* Date blank placeholder for Child transaction */
             width={110}
             style={{
               width: 110,
@@ -1403,68 +1449,9 @@ const Transaction = memo(function Transaction({
               border: 0, // known z-order issue, bottom border for parent transaction hidden
             }}
           />
-        )}
-
-        {isChild && showAccount && (
-          <Field
-            /* Account blank placeholder for Child transaction */
-            style={{
-              flex: 1,
-              backgroundColor: theme.tableRowBackgroundHover,
-              border: 0,
-            }}
-          />
-        )}
-
-        {/* Checkmark - for Child transaction
-      between normal Date and Payee or Account and Payee if needed */}
-        {isTemporaryId(transaction.id) ? (
-          isChild ? (
-            <DeleteCell
-              onDelete={() => onDelete && onDelete(transaction.id)}
-              exposed={editing}
-              style={{
-                ...(isChild && { borderLeftWidth: 1 }),
-                lineHeight: 0,
-              }}
-            />
-          ) : (
-            <Cell width={20} />
-          )
-        ) : (isPreview && isChild) || !showSelection ? (
-          <Cell width={20} />
         ) : (
-          <SelectCell
-            /* Checkmark field for non-child transaction */
-            exposed
-            buttonProps={{
-              className: selected || editing ? undefined : 'hover-visible',
-            }}
-            focused={focusedField === 'select'}
-            onSelect={(e: KeyboardEvent<HTMLDivElement>) => {
-              dispatchSelected({
-                type: 'select',
-                id: transaction.id,
-                isRangeSelect: e.shiftKey,
-              });
-            }}
-            onEdit={() => onEdit(id, 'select')}
-            selected={selected}
-            style={{ ...(isChild && { borderLeftWidth: 1 }) }}
-            value={
-              matched
-                ? // TODO: this will require changes in table.tsx
-                  ((
-                    <SvgHyperlink2
-                      style={{ width: 13, height: 13, color: 'inherit' }}
-                    />
-                  ) as unknown as string)
-                : undefined
-            }
-          />
-        )}
-        {!isChild && (
           <CustomCell
+            key={columnId}
             /* Date field for non-child transaction */
             name="date"
             width={110}
@@ -1499,10 +1486,21 @@ const Transaction = memo(function Transaction({
               />
             )}
           </CustomCell>
-        )}
-
-        {!isChild && showAccount && (
+        );
+      case 'account':
+        return isChild ? (
+          <Field
+            key={columnId}
+            /* Account blank placeholder for Child transaction */
+            style={{
+              flex: 1,
+              backgroundColor: theme.tableRowBackgroundHover,
+              border: 0,
+            }}
+          />
+        ) : (
           <CustomCell
+            key={columnId}
             /* Account field for non-child transaction */
             name="account"
             width="flex"
@@ -1545,9 +1543,11 @@ const Transaction = memo(function Transaction({
               />
             )}
           </CustomCell>
-        )}
-        {(() => (
+        );
+      case 'payee':
+        return (
           <PayeeCell
+            key={columnId}
             /* Payee field for all transactions */
             id={id}
             payee={payee}
@@ -1570,22 +1570,26 @@ const Transaction = memo(function Transaction({
             onNavigateToTransferAccount={onNavigateToTransferAccount}
             onNavigateToSchedule={onNavigateToSchedule}
           />
-        ))()}
-
-        <NotesCell
-          note={notes ?? ''}
-          scheduleNote={isPreview ? schedule?.name : null}
-          focused={focusedField === 'notes'}
-          valueStyle={valueStyle}
-          onClickTag={onNotesTagClick}
-          onUpdate={value => {
-            onUpdate('notes', value?.trim());
-          }}
-          onExpose={name => !isPreview && onEdit(id, name)}
-        />
-
-        {(isPreview && !isChild) || isParent ? (
+        );
+      case 'notes':
+        return (
+          <NotesCell
+            key={columnId}
+            note={notes ?? ''}
+            scheduleNote={isPreview ? schedule?.name : null}
+            focused={focusedField === 'notes'}
+            valueStyle={valueStyle}
+            onClickTag={onNotesTagClick}
+            onUpdate={value => {
+              onUpdate('notes', value?.trim());
+            }}
+            onExpose={name => !isPreview && onEdit(id, name)}
+          />
+        );
+      case 'category':
+        return (isPreview && !isChild) || isParent ? (
           <Cell
+            key={columnId}
             /* Category field (Split button) for parent transactions */
             name="category"
             width="flex"
@@ -1681,6 +1685,7 @@ const Transaction = memo(function Transaction({
           </Cell>
         ) : isBudgetTransfer || isOffBudget ? (
           <InputCell
+            key={columnId}
             /* Category field for transfer and off budget transactions
               (NOT preview, it is covered first) */
             name="category"
@@ -1710,6 +1715,7 @@ const Transaction = memo(function Transaction({
           />
         ) : (
           <CustomCell
+            key={columnId}
             /* Category field for normal and child transactions */
             name="category"
             width="flex"
@@ -1772,72 +1778,80 @@ const Transaction = memo(function Transaction({
               </SheetNameProvider>
             )}
           </CustomCell>
-        )}
-
-        <InputCell
-          /* Debit field for all transactions */
-          type="input"
-          width={100}
-          name="debit"
-          exposed={focusedField === 'debit'}
-          focused={focusedField === 'debit'}
-          value={debit === '' && credit === '' ? amountToCurrency(0) : debit}
-          formatter={value =>
-            // reformat value so since we might have kept decimals
-            value ? amountToCurrency(currencyToAmount(value) || 0) : ''
-          }
-          valueStyle={valueStyle}
-          textAlign="right"
-          title={debit}
-          onExpose={name => !isPreview && onEdit(id, name)}
-          style={{
-            ...(isParent && { fontStyle: 'italic' }),
-            ...styles.tnum,
-            ...amountStyle,
-          }}
-          inputProps={{
-            value: debit === '' && credit === '' ? amountToCurrency(0) : debit,
-            onUpdate: onUpdate.bind(null, 'debit'),
-            'data-1p-ignore': true,
-          }}
-          privacyFilter={{
-            activationFilters: [!isTemporaryId(transaction.id)],
-          }}
-        />
-
-        <InputCell
-          /* Credit field for all transactions */
-          type="input"
-          width={100}
-          name="credit"
-          exposed={focusedField === 'credit'}
-          focused={focusedField === 'credit'}
-          value={credit}
-          formatter={value =>
-            // reformat value so since we might have kept decimals
-            value ? amountToCurrency(currencyToAmount(value) || 0) : ''
-          }
-          valueStyle={valueStyle}
-          textAlign="right"
-          title={credit}
-          onExpose={name => !isPreview && onEdit(id, name)}
-          style={{
-            ...(isParent && { fontStyle: 'italic' }),
-            ...styles.tnum,
-            ...amountStyle,
-          }}
-          inputProps={{
-            value: credit,
-            onUpdate: onUpdate.bind(null, 'credit'),
-            'data-1p-ignore': true,
-          }}
-          privacyFilter={{
-            activationFilters: [!isTemporaryId(transaction.id)],
-          }}
-        />
-
-        {showBalance && (
+        );
+      case 'payment':
+        return (
+          <InputCell
+            key={columnId}
+            /* Debit field for all transactions */
+            type="input"
+            width={100}
+            name="debit"
+            exposed={focusedField === 'debit'}
+            focused={focusedField === 'debit'}
+            value={debit === '' && credit === '' ? amountToCurrency(0) : debit}
+            formatter={value =>
+              // reformat value so since we might have kept decimals
+              value ? amountToCurrency(currencyToAmount(value) || 0) : ''
+            }
+            valueStyle={valueStyle}
+            textAlign="right"
+            title={debit}
+            onExpose={name => !isPreview && onEdit(id, name)}
+            style={{
+              ...(isParent && { fontStyle: 'italic' }),
+              ...styles.tnum,
+              ...amountStyle,
+            }}
+            inputProps={{
+              value:
+                debit === '' && credit === '' ? amountToCurrency(0) : debit,
+              onUpdate: onUpdate.bind(null, 'debit'),
+              'data-1p-ignore': true,
+            }}
+            privacyFilter={{
+              activationFilters: [!isTemporaryId(transaction.id)],
+            }}
+          />
+        );
+      case 'deposit':
+        return (
+          <InputCell
+            key={columnId}
+            /* Credit field for all transactions */
+            type="input"
+            width={100}
+            name="credit"
+            exposed={focusedField === 'credit'}
+            focused={focusedField === 'credit'}
+            value={credit}
+            formatter={value =>
+              // reformat value so since we might have kept decimals
+              value ? amountToCurrency(currencyToAmount(value) || 0) : ''
+            }
+            valueStyle={valueStyle}
+            textAlign="right"
+            title={credit}
+            onExpose={name => !isPreview && onEdit(id, name)}
+            style={{
+              ...(isParent && { fontStyle: 'italic' }),
+              ...styles.tnum,
+              ...amountStyle,
+            }}
+            inputProps={{
+              value: credit,
+              onUpdate: onUpdate.bind(null, 'credit'),
+              'data-1p-ignore': true,
+            }}
+            privacyFilter={{
+              activationFilters: [!isTemporaryId(transaction.id)],
+            }}
+          />
+        );
+      case 'balance':
+        return (
           <Cell
+            key={columnId}
             /* Balance field for all transactions */
             name="balance"
             value={
@@ -1856,10 +1870,11 @@ const Transaction = memo(function Transaction({
             textAlign="right"
             privacyFilter
           />
-        )}
-
-        {showCleared && (
+        );
+      case 'cleared':
+        return (
           <StatusCell
+            key={columnId}
             /* Icon field for all transactions */
             id={id}
             focused={focusedField === 'cleared'}
@@ -1878,7 +1893,76 @@ const Transaction = memo(function Transaction({
             onEdit={onEdit}
             onUpdate={onUpdate}
           />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View
+      innerRef={dropRef}
+      {...dropProps}
+      style={{
+        position: 'relative',
+      }}
+    >
+      <DropHighlight pos={showDropHighlight ? dropPos : null} />
+      <Row
+        ref={rowRef}
+        {...dragProps}
+        style={{
+          backgroundColor: selected
+            ? theme.tableRowBackgroundHighlight
+            : backgroundFocus
+              ? theme.tableRowBackgroundHover
+              : index % 2 === 0
+                ? theme.tableBackground
+                : theme.tableRowBackgroundAlternate,
+          ':hover': !(backgroundFocus || selected) && {
+            backgroundColor: theme.tableRowBackgroundHover,
+          },
+          '& .hover-visible': {
+            opacity: 0,
+          },
+          ':hover .hover-visible': {
+            opacity: 1,
+          },
+          ...(highlighted || selected
+            ? { color: theme.tableRowBackgroundHighlightText }
+            : { color: theme.tableText }),
+          ...style,
+          ...(isPreview && {
+            color: theme.tableTextInactive,
+            fontStyle: 'italic',
+          }),
+          ...(_unmatched && { opacity: 0.5 }),
+          ...(isBeingDragged && { opacity: 0.5 }),
+        }}
+      >
+        {splitError && listContainerRef?.current && (
+          <Popover
+            triggerRef={triggerRef}
+            isOpen
+            isNonModal
+            style={{
+              width: 'max-content',
+              maxWidth: 'none',
+              maxHeight: 'none !important',
+              minWidth: 375,
+              padding: 5,
+            }}
+            shouldFlip={false}
+            placement="bottom end"
+            UNSTABLE_portalContainer={listContainerRef.current}
+          >
+            {splitError}
+          </Popover>
         )}
+
+        {columns.slice(0, selectionCellIndex).map(renderColumnCell)}
+        {selectionCell}
+        {columns.slice(selectionCellIndex).map(renderColumnCell)}
 
         <Cell width={5} />
       </Row>
@@ -2105,10 +2189,8 @@ type NewTransactionProps = {
   ) => void;
   onSplit: (id: TransactionEntity['id']) => void;
   payees: PayeeEntity[];
-  showAccount?: boolean;
-  showBalance?: boolean;
+  columns: TransactionTableColumnId[];
   balance?: number | null;
-  showCleared?: boolean;
   transactions: TransactionEntity[];
   transferAccountsByTransaction: {
     [id: TransactionEntity['id']]: AccountEntity | null;
@@ -2123,9 +2205,7 @@ function NewTransaction({
   transferAccountsByTransaction,
   editingTransaction,
   focusedField,
-  showAccount,
-  showBalance,
-  showCleared,
+  columns,
   dateFormat,
   hideFraction,
   onClose,
@@ -2188,9 +2268,7 @@ function NewTransaction({
           transaction={transaction}
           subtransactions={transaction.is_parent ? childTransactions : null}
           transferAccountsByTransaction={transferAccountsByTransaction}
-          showAccount={showAccount}
-          showBalance={showBalance}
-          showCleared={showCleared}
+          columns={columns}
           focusedField={
             editingTransaction === transaction.id ? focusedField : undefined
           }
@@ -2282,11 +2360,8 @@ type TransactionTableInnerProps = {
   categoryGroups: CategoryGroupEntity[];
   payees: PayeeEntity[];
   balances: Record<TransactionEntity['id'], IntegerAmount> | null;
-  showBalances: boolean;
+  columns: TransactionTableColumnId[];
   showReconciled: boolean;
-  showCleared: boolean;
-  showAccount: boolean;
-  showCategory: boolean;
   currentAccountId: AccountEntity['id'];
   currentCategoryId: CategoryEntity['id'];
   isAdding: boolean;
@@ -2421,9 +2496,7 @@ function TransactionTableInner({
       accounts,
       categoryGroups,
       payees,
-      showCleared,
-      showAccount,
-      showBalances,
+      columns,
       balances,
       hideFraction,
       isNew,
@@ -2494,9 +2567,7 @@ function TransactionTableInner({
         transaction={trans}
         transferAccountsByTransaction={props.transferAccountsByTransaction}
         subtransactions={childTransactions}
-        showAccount={showAccount}
-        showBalance={showBalances}
-        showCleared={showCleared}
+        columns={columns}
         selected={selected}
         highlighted={false}
         added={isNew?.(trans.id)}
@@ -2571,10 +2642,7 @@ function TransactionTableInner({
       <View>
         <TransactionHeader
           hasSelected={props.selectedItems.size > 0}
-          showAccount={props.showAccount}
-          showCategory={props.showCategory}
-          showBalance={props.showBalances}
-          showCleared={props.showCleared}
+          columns={props.columns}
           scrollWidth={scrollWidth}
           onSort={props.onSort}
           ascDesc={props.ascDesc}
@@ -2598,9 +2666,7 @@ function TransactionTableInner({
               accounts={props.accounts}
               categoryGroups={props.categoryGroups}
               payees={props.payees || []}
-              showAccount={props.showAccount}
-              showBalance={props.showBalances}
-              showCleared={props.showCleared}
+              columns={props.columns}
               dateFormat={dateFormat}
               hideFraction={props.hideFraction}
               onClose={props.onCloseAddTransaction}
@@ -2681,6 +2747,11 @@ export type TransactionTableProps = {
   showCleared: boolean;
   showAccount: boolean;
   showCategory: boolean;
+  // The full set of columns the user wants visible, in display order. When
+  // provided, columns are rendered in this order; the show* flags above
+  // still control the availability of the account/category/balance/cleared
+  // columns in the current view.
+  columnOrder?: TransactionTableColumnId[];
   currentAccountId: AccountEntity['id'];
   currentCategoryId: CategoryEntity['id'];
   isAdding: boolean;
@@ -2739,6 +2810,26 @@ export const TransactionTable = forwardRef(
     const [newTransactions, setNewTransactions] = useState<TransactionEntity[]>(
       [],
     );
+
+    // The ordered list of columns to render. The show* flags control which
+    // of the account/category/balance/cleared columns are available in the
+    // current view; `columnOrder` carries the user's column preferences.
+    const visibleColumns = (
+      props.columnOrder ?? [...TRANSACTION_TABLE_COLUMN_IDS]
+    ).filter(columnId => {
+      switch (columnId) {
+        case 'account':
+          return props.showAccount;
+        case 'category':
+          return props.showCategory;
+        case 'balance':
+          return props.showBalances;
+        case 'cleared':
+          return props.showCleared;
+        default:
+          return true;
+      }
+    });
     const [prevIsAdding, setPrevIsAdding] = useState(false);
     const splitsExpanded = useSplitsExpanded();
     const splitsExpandedDispatch = splitsExpanded.dispatch;
@@ -2976,48 +3067,50 @@ export const TransactionTable = forwardRef(
       }
     }, [newTransactions, props, props.transactions]);
 
+    function columnToField(columnId: TransactionTableColumnId) {
+      // The payment/deposit columns map to the debit/credit fields
+      return columnId === 'payment'
+        ? 'debit'
+        : columnId === 'deposit'
+          ? 'credit'
+          : columnId;
+    }
+
+    function getFocusableFields() {
+      // The balance column is display-only and can't be focused
+      return visibleColumns
+        .filter(columnId => columnId !== 'balance')
+        .map(columnToField);
+    }
+
     function getFieldsNewTransaction(item?: TransactionEntity) {
-      const fields = [
-        'select',
-        'date',
-        'account',
-        'payee',
-        'notes',
-        'category',
-        'debit',
-        'credit',
-        'cleared',
-        'cancel',
-        'add',
-      ];
+      const fields = ['select', ...getFocusableFields(), 'cancel', 'add'];
 
       return getFields(item, fields);
     }
 
     function getFieldsTableTransaction(item?: TransactionEntity) {
-      const fields = [
-        'select',
-        'date',
-        'account',
-        'payee',
-        'notes',
-        'category',
-        'debit',
-        'credit',
-        'cleared',
-      ];
+      const fields = ['select', ...getFocusableFields()];
 
       return getFields(item, fields);
     }
 
     function getFields(item: TransactionEntity | undefined, fields: string[]) {
+      const childColumns: TransactionTableColumnId[] = [
+        'payee',
+        'notes',
+        'category',
+        'payment',
+        'deposit',
+      ];
       fields = item?.is_child
-        ? ['select', 'payee', 'notes', 'category', 'debit', 'credit']
-        : fields.filter(
-            f =>
-              (props.showAccount || f !== 'account') &&
-              (props.showCategory || f !== 'category'),
-          );
+        ? [
+            'select',
+            ...visibleColumns
+              .filter(columnId => childColumns.includes(columnId))
+              .map(columnToField),
+          ]
+        : fields;
 
       if (item?.id && isPreviewId(item.id)) {
         fields = ['select'];
@@ -3475,6 +3568,7 @@ export const TransactionTable = forwardRef(
             tableRef={mergedRef}
             listContainerRef={listContainerRef}
             {...props}
+            columns={visibleColumns}
             transactions={transactionsWithExpandedSplits}
             transactionMap={transactionMap}
             transactionsByParent={transactionsByParent}

@@ -9,6 +9,7 @@ import { AnimatedLoading } from '@actual-app/components/icons/AnimatedLoading';
 import {
   SvgAdd,
   SvgDotsHorizontalTriple,
+  SvgViewColumn,
 } from '@actual-app/components/icons/v1';
 import {
   SvgArrowsExpand3,
@@ -67,14 +68,11 @@ type AccountHeaderProps = {
   accountsSyncing: string[];
   accounts: AccountEntity[];
   transactions: TransactionEntity[];
-  showBalances: boolean;
   showExtraBalances: boolean;
-  showCleared: boolean;
   showReconciled: boolean;
   showEmptyMessage: boolean;
   balanceQuery: ComponentProps<typeof ReconcilingMessage>['balanceQuery'];
   reconcileAmount?: number | null;
-  canCalculateBalance?: () => boolean;
   isFiltered: boolean;
   filteredAmount?: number | null;
   isSorted: boolean;
@@ -83,6 +81,7 @@ type AccountHeaderProps = {
   filterConditionsOp: 'and' | 'or';
   onSearch: (newSearch: string) => void;
   onAddTransaction: () => void;
+  onManageColumns: () => void;
   onShowTransactions: ComponentProps<
     typeof SelectedTransactionsButton
   >['onShow'];
@@ -142,14 +141,11 @@ export function AccountHeader({
   accountsSyncing,
   accounts,
   transactions,
-  showBalances,
   showExtraBalances,
-  showCleared,
   showReconciled,
   showEmptyMessage,
   balanceQuery,
   reconcileAmount,
-  canCalculateBalance,
   isFiltered,
   filteredAmount,
   isSorted,
@@ -158,6 +154,7 @@ export function AccountHeader({
   filterConditionsOp,
   onSearch,
   onAddTransaction,
+  onManageColumns,
   onShowTransactions,
   onDoneReconciling,
   onCreateReconciliationTransaction,
@@ -470,6 +467,17 @@ export function AccountHeader({
           </View>
           <Button
             variant="bare"
+            aria-label={t('Table columns')}
+            style={{ padding: 6 }}
+            onPress={onManageColumns}
+            data-testid="table-columns-button"
+          >
+            <View title={t('Table columns')}>
+              <SvgViewColumn style={{ width: 15, height: 15 }} />
+            </View>
+          </Button>
+          <Button
+            variant="bare"
             aria-label={
               splitsExpanded.state.mode === 'collapse'
                 ? t('Collapse split transactions')
@@ -509,12 +517,7 @@ export function AccountHeader({
                       account={account}
                       canSync={canSync}
                       showNetWorthChart={showNetWorthChart}
-                      canShowBalances={
-                        canCalculateBalance ? canCalculateBalance() : false
-                      }
                       isSorted={isSorted}
-                      showBalances={showBalances}
-                      showCleared={showCleared}
                       showReconciled={showReconciled}
                       onMenuSelect={onMenuSelect}
                     />
@@ -553,6 +556,10 @@ export function AccountHeader({
                           text: showNetWorthChart
                             ? t('Hide balance chart')
                             : t('Show balance chart'),
+                        },
+                        {
+                          name: 'manage-columns',
+                          text: t('Table columns'),
                         },
                       ]}
                     />
@@ -727,9 +734,6 @@ type AccountMenuProps = {
   account: AccountEntity;
   canSync: boolean;
   showNetWorthChart: boolean;
-  showBalances: boolean;
-  canShowBalances: boolean;
-  showCleared: boolean;
   showReconciled: boolean;
   isSorted: boolean;
   onMenuSelect: (
@@ -739,11 +743,10 @@ type AccountMenuProps = {
       | 'close'
       | 'reopen'
       | 'export'
-      | 'toggle-balance'
       | 'remove-sorting'
-      | 'toggle-cleared'
       | 'toggle-reconciled'
-      | 'toggle-net-worth-chart',
+      | 'toggle-net-worth-chart'
+      | 'manage-columns',
   ) => void;
 };
 
@@ -751,9 +754,6 @@ function AccountMenu({
   account,
   canSync,
   showNetWorthChart,
-  showBalances,
-  canShowBalances,
-  showCleared,
   showReconciled,
   isSorted,
   onMenuSelect,
@@ -776,16 +776,6 @@ function AccountMenu({
               } as const,
             ]
           : []),
-        ...(canShowBalances
-          ? [
-              {
-                name: 'toggle-balance',
-                text: showBalances
-                  ? t('Hide running balance')
-                  : t('Show running balance'),
-              } as const,
-            ]
-          : []),
         {
           name: 'toggle-net-worth-chart',
           text: showNetWorthChart
@@ -793,10 +783,8 @@ function AccountMenu({
             : t('Show balance chart'),
         },
         {
-          name: 'toggle-cleared',
-          text: showCleared
-            ? t('Hide "cleared" checkboxes')
-            : t('Show "cleared" checkboxes'),
+          name: 'manage-columns',
+          text: t('Table columns'),
         },
         {
           name: 'toggle-reconciled',
