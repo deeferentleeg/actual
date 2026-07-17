@@ -196,6 +196,7 @@ const TransactionHeader = memo(
           borderBottomWidth: 1,
           borderColor: theme.tableBorder,
         }}
+        data-testid="transaction-table-header"
       >
         {showSelection && (
           <SelectCell
